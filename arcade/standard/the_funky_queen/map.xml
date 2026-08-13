@@ -1,9 +1,9 @@
 <map proto="1.5.0">
 <name>The Funky Queen</name>
-<version>1.1.1</version>
+<version>1.1.6</version>
 <objective>Be the best funky player, and become the Queen of Funky!</objective>
 <created>2025-09-29</created>
-<phase>development</phase>
+<phase>staging</phase>
 <game>Tournament</game>
 <include id="countdown"/>
 <include id="void-death"/>
@@ -401,7 +401,7 @@
         <chestplate material="leather chestplate" color="DECF2A" locked="true"/>
         <leggings material="leather leggings" color="DECF2A" locked="true"/>
         <boots material="leather boots" color="DECF2A" locked="true"/>
-        <effect duration="3s" amplifier="100">damage resistance</effect>
+        <effect duration="1s" amplifier="100">damage resistance</effect>
         <max-health>4</max-health>
         <double-jump power="2.2" recharge-before-landing="true"/>
         <fly can-fly="false"/>
@@ -1952,7 +1952,7 @@
         <cuboid id="gs-spawn-5" min="-427.5,37,362.5" max="-411.5,37,369.5"/>
         <cuboid id="gs-spawn-6" min="-403.5,37,376.5" max="-399.5,37,394.5"/>
         <cuboid id="gs-spawn-7" min="-390.5,35,441.5" max="-387.5,35,433.5"/>
-        <cuboid id="gs-spawn-8" min="-378.5,40,435.5" max="-370.5,40,327.5"/>
+        <cuboid id="gs-spawn-8" min="-378.5,40,435.5" max="-370.5,40,427.5"/>
         <cuboid id="gs-spawn-9" min="-365.5,36,449.5" max="-362.5,36,443.5"/>
         <cuboid id="gs-spawn-10" min="-363.5,35,437.5" max="-359.5,35,429.5"/>
         <cuboid id="gs-spawn-11" min="-365.5,36,323.5" max="-362.5,36,329.5"/>
@@ -2984,6 +2984,8 @@
     <variable id="gb_platform_found" scope="player"/>
     <variable id="gb_has_finished" scope="player"/>
     <variable id="gb_has_started" scope="player"/>
+    <variable id="gb_final_position" scope="player"/>
+    <variable id="gb_last_position"/>
     <variable id="gb_current_platform" scope="player" default="-1"/>
     <variable id="gb_i_p" scope="player"/>
     <variable id="gb_p_p" scope="player"/>
@@ -3077,6 +3079,7 @@
     <variable id="spectating" scope="player"/>
     <variable id="lost" scope="player"/>
     <variable id="on_time" scope="player"/>
+    <variable id="last_played_round" scope="player"/>
     <variable id="scoring_i"/>
     <variable id="round_real_p"/>
     <variable id="round_p"/>
@@ -3095,6 +3098,7 @@
     <variable id="repeated_amount"/>
     <variable id="available_positions"/>
     <variable id="winners_available"/>
+    <variable id="did_score_during_last_round" scope="player"/>
     <variable id="current_selection_mode"/>
     <variable id="selection_switched"/>
     <variable id="selection_mode_ready"/>
@@ -3978,11 +3982,11 @@
             <set var="tip_toe_x" value="tip_toe_current - (8 * tip_toe_z)"/>
 
             <!-- <fill region="tip_toe_cursor_2" material="air"/>
-<set var="tip_toe_cursor_2" index="0" value="-390 + 6 * tip_toe_z"/>
-<set var="tip_toe_cursor_2" index="2" value="-148 - 6 * tip_toe_x"/>
-<set var="tip_toe_cursor_2" index="3" value="-385 + 6 * tip_toe_z"/>
-<set var="tip_toe_cursor_2" index="5" value="-143 - 6 * tip_toe_x"/>
-<fill region="tip_toe_cursor_2" material="stained clay:4"/> -->
+        <set var="tip_toe_cursor_2" index="0" value="-390 + 6 * tip_toe_z"/>
+        <set var="tip_toe_cursor_2" index="2" value="-148 - 6 * tip_toe_x"/>
+        <set var="tip_toe_cursor_2" index="3" value="-385 + 6 * tip_toe_z"/>
+        <set var="tip_toe_cursor_2" index="5" value="-143 - 6 * tip_toe_x"/>
+        <fill region="tip_toe_cursor_2" material="stained clay:4"/> -->
 
             <!-- select random neighbor -->
             <!-- south -->
@@ -4086,10 +4090,10 @@
 
             <!-- <fill region="tip_toe_cursor" material="air"/> -->
             <!-- <set var="tip_toe_cursor" index="0" value="-390 + 6 * tip_toe_z"/>
-<set var="tip_toe_cursor" index="2" value="-148 - 6 * tip_toe_x"/>
-<set var="tip_toe_cursor" index="3" value="-385 + 6 * tip_toe_z"/>
-<set var="tip_toe_cursor" index="5" value="-143 - 6 * tip_toe_x"/>
-<fill region="tip_toe_cursor" material="stained clay:4"/> -->
+        <set var="tip_toe_cursor" index="2" value="-148 - 6 * tip_toe_x"/>
+        <set var="tip_toe_cursor" index="3" value="-385 + 6 * tip_toe_z"/>
+        <set var="tip_toe_cursor" index="5" value="-143 - 6 * tip_toe_x"/>
+        <fill region="tip_toe_cursor" material="stained clay:4"/> -->
 
             <set var="tip_toe_can_visit_n" value="0"/>
             <set var="tip_toe_can_visit_s" value="0"/>
@@ -4220,10 +4224,10 @@
                 <fill region="tip_toe_cursor" material="stained clay"/>
 
                 <!-- <message text="DRAWING: {0}">
-        <replacements>
-            <decimal id="0" value="tip_toe_stack[tip_toe_i]"/>
-        </replacements>
-    </message> -->
+                <replacements>
+                    <decimal id="0" value="tip_toe_stack[tip_toe_i]"/>
+                </replacements>
+            </message> -->
 
                 <set var="tip_toe_i" value="tip_toe_i + 1"/>
                 <set var="tip_toe_calc" value="tip_toe_stack[tip_toe_i + 1]"/>
@@ -4423,6 +4427,9 @@
     <action id="set-round-preparing" scope="match">
         <set var="round_state" value="${RND_PREPARING}"/>
         <set var="current_round" value="current_round + 1"/>
+        <switch-scope inner="player" filter="participating">
+            <set var="last_played_round" value="current_round"/>
+        </switch-scope>
         <action id="count-players"/>
         <switch-scope inner="player" filter="any(debug_mode=1,debugger=1)">
             <message text="`c`lROUND PREPARING"/>
@@ -4545,6 +4552,7 @@
     <action id="scoring-save-points" scope="match">
         <switch-scope inner="player" filter="participating">
             <set var="points_per_round" index="current_round - 1" value="max(floor(hidden_score * multiplier), 0)"/>
+            <set var="did_score_during_last_round" value="1"/>
         </switch-scope>
     </action>
     <action id="announce-winners" scope="match">
@@ -4665,9 +4673,6 @@
         <switch-scope inner="player">
             <set var="score" value="hidden_score"/>
         </switch-scope>
-    </action>
-    <action id="enable-glass-bridge" scope="match" expose="true">
-        <set var="played_minigames" index="${MG_GLASS_BRIDGE}-1" value="0"/>
     </action>
     <action id="select-random-minigame" scope="match">
         <set var="roulette_spinning_i" value="1"/>
@@ -5131,6 +5136,20 @@
     </trigger>
     <trigger filter="all(round-playing,playing-glass-bridge,ap,lost=0,gb_should_lose=0,gb_has_finished=0,glass-bridge-finish-line,gb_has_started=1)" scope="player">
         <action>
+            <set var="gb_final_position" value="gb_last_position + 1"/>
+            <set var="gb_last_position" value="gb_final_position"/>
+
+            <message actionbar="`a`l+{p} `f{word}">
+                <replacements>
+                    <decimal id="p" value="players - (gb_last_position - 1)"/>
+                    <switch id="word" value="players - (gb_last_position - 1)">
+                        <case match="1" result="Point"/>
+                        <fallback>Points</fallback>
+                    </switch>
+                </replacements>
+            </message>
+            <set var="score" value="players - (gb_last_position - 1)"/>
+
             <kit id="spectator-kit"/>
             <set var="score" value="score + 5"/>
             <set var="gb_someone_finished" value="1"/>
@@ -6895,6 +6914,15 @@
             <after duration="0.1s" filter="all(game-playing,participating,dead,cant-join)"/>
         </filter>
     </trigger>
+    <trigger action="score := 0" filter="all(not(game-playing),did_score_during_last_round=0)" scope="player"/>
+    <trigger filter="game-playing" scope="player">
+        <action>
+            <action filter="not(last_played_round-current_round=0)">
+                <set var="score" value="0"/>
+                <set var="on_time" value="0"/>
+            </action>
+        </action>
+    </trigger>
     <trigger filter="round-finished" scope="match">
         <action>
             <action id="scoring-rank-players"/>
@@ -6916,10 +6944,10 @@
             </schedule>
         </action>
     </trigger>
-    <trigger action="score := 0" filter="round-preparing" scope="player"/>
-    <trigger filter="match-started" scope="match">
+    <trigger filter="round-preparing" scope="player">
         <action>
-            <set var="played_minigames" index="${MG_GLASS_BRIDGE}-1" value="1"/>
+            <set var="score" value="0"/>
+            <set var="did_score_during_last_round" value="0"/>
         </action>
     </trigger>
     <trigger scope="match">
